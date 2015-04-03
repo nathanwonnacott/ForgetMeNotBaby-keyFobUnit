@@ -1,3 +1,8 @@
+
+#include "CarseatUnitStateMachine.h"
+
+public CarseatUnitStateMachine* stateMachine;
+
 void setup() {
   // put your setup code here, to run once:
 
