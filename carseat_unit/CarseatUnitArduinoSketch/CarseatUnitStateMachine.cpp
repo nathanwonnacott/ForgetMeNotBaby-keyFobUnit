@@ -1,10 +1,25 @@
 
-#include "CarseatUnitStateDiagram.h";
+#include "CarseatUnitStateMachine.h"
 
-CarseatUnitStateDiagram::CarseatUnitStateDiagram(unsigned short id)
+//Initialize static variables
+
+CarseatUnitStateMachine* CarseatUnitStateMachine::singleton = NULL;
+
+//Class methods
+
+CarseatUnitStateMachine::CarseatUnitStateMachine()
 {
-  this->id = id;
+}
+
+CarseatUnitStateMachine* CarseatUnitStateMachine::getStateMachine()
+{
+  if(singleton == NULL)
+    singleton = new CarseatUnitStateMachine();
   
-  pinMode(4,OUTPUT);
-  digitalWrite(4, HIGH);
+  return singleton;
+}
+
+void CarseatUnitStateMachine::recieveMessage(char* message, int count)
+{
+  
 }

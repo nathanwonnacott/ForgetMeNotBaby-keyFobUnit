@@ -1,11 +1,13 @@
+#include <TimerOne.h>
+
 
 #include "CarseatUnitStateMachine.h"
 
-public CarseatUnitStateMachine* stateMachine;
+CarseatUnitStateMachine* stateMachine;
 
 void setup() {
   // put your setup code here, to run once:
-
+  stateMachine = CarseatUnitStateMachine::getStateMachine();
 }
 
 void loop() {
