@@ -5,10 +5,10 @@
  This is the main controller for this program.
 */
 
-#include "Arduino.h"
-
 #ifndef CARSEAT_UNIT_STATE_MACHINE_H
   #define CARSEAT_UNIT_STATE_MACHINE_H
+  
+#include "Arduino.h"
   
 #define ID 0x1234
 
