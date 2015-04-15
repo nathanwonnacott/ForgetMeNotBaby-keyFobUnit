@@ -1,4 +1,4 @@
-
+ 
 #include "TimerOneMulti.h"
 
 //Initialize static variables
@@ -15,8 +15,14 @@ void toggleLight()
 }
 
 //TimerEvent class methods
-TimerEvent::TimerEvent(unsigned long delta, void (*callback) (void*), void* arg)
+TimerEvent::TimerEvent(unsigned long period, void (*callback) (void*), bool periodic, void* arg)
 {
+  this->period = period;
+  this->delta = period;
+  this->callback = callback;
+  this->periodic = periodic;
+  this->arg = arg;
+  this->next = NULL;
 }
 
 //TimerOneMulti class methods
@@ -41,22 +47,65 @@ TimerOneMulti* TimerOneMulti::getTimerController()
   return singleton;
 }
 
-TimerEvent* TimerOneMulti::addEvent(unsigned long period, void (*callback) (void*), void* arg /* Default = NULL */)
+TimerEvent* TimerOneMulti::addEvent(unsigned long period, void (*callback) (void*), bool periodic /* Default = false */, void* arg /* Default = NULL */)
 {
-  TimerEvent* event = new TimerEvent(period, callback, arg);
-  Timer1.setPeriod(period);
   
-  //Add to events
-  //TODO use events like a linked list
-  events = event;
+  TimerEvent* event = new TimerEvent(period, callback, periodic, arg);
+  bool queueWasEmpty = false;
   
-  Timer1.start();
-  Timer1.attachInterrupt(tick);  // attaches callback() as a timer overflow interrupt
+  //Critical section
+  noInterrupts();
+  {  
+    //Add to events
+    if ( events ==   NULL)
+    {
+      events = event;
+      queueWasEmpty = true;
+    }
+    else
+    {
+      events->delta -= Timer1.read();
+      if ( events->delta > period)
+      {
+        //Insert at the beginning of the list
+        events->delta -= period;
+        event->next = events;
+        events  = event;
+      }
+      
+    }
+    
+  }  
+  interrupts();
+  
+  Timer1.setPeriod(events->delta);
+  if(queueWasEmpty)
+  {
+    Timer1.start();
+    Timer1.attachInterrupt(tick);  // attaches callback() as a timer overflow interrupt
+  }
+  
+  //TODO figure out if any timer interrupts should have occurred while we were in the critical section
 }
 
 void TimerOneMulti::advanceTimer()
 {
-  events->callback(events->arg);
+  if (events != NULL)
+  {
+    events->callback(events->arg);
+    events = events->next;
+   if (events == NULL)
+   {
+     Timer1.stop();
+   }
+   else
+   {
+     Timer1.setPeriod(events->delta);
+     Timer1.start();
+     Timer1.attachInterrupt(tick);
+   } 
+  }
+  
 }
 
 void TimerOneMulti::tick()

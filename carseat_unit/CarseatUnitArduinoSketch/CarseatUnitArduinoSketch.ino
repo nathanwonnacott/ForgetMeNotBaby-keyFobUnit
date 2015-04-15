@@ -21,7 +21,8 @@ void setup() {
   timerController = TimerOneMulti::getTimerController();
   stateMachine = CarseatUnitStateMachine::getStateMachine();
   
-  timerController->addEvent(2000000,setLED,(void*) 1);
+  timerController->addEvent(4000000,setLED,false, (void*) 0);
+  timerController->addEvent(2000000,setLED,false, (void*) 1);
   
 }
 

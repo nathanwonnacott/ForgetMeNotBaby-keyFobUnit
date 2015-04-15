@@ -16,8 +16,10 @@ class TimerEvent
 {
   friend class TimerOneMulti;
 private:
-  TimerEvent(unsigned long delta, void (*callback) (void*), void* arg);
+  TimerEvent(unsigned long period, void (*callback) (void*), bool periodic, void* arg);
   unsigned long delta;
+  unsigned long period;
+  bool periodic;
   void (*callback) (void*);
   void* arg;  
   TimerEvent* next;
@@ -32,7 +34,7 @@ private:
 public:
   static TimerOneMulti* getTimerController();
   
-  TimerEvent* addEvent(unsigned long period, void (*callback) (void*), void* arg = NULL);
+  TimerEvent* addEvent(unsigned long period, void (*callback) (void*), bool periodic = false, void* arg = NULL);
   
   /*
    This is really the tick function. The actual tick function has to be static, so it calls this one with the singleton.
