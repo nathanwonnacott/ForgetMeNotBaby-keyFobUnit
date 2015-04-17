@@ -14,6 +14,15 @@ void toggleLight()
   digitalWrite(13,ledState);
 }
 
+void quickBeep()
+{
+  for(unsigned long i=0;i<1000;i++)
+  {
+    digitalWrite(12,HIGH);
+  }
+  digitalWrite(12,LOW);
+}
+
 //TimerEvent class methods
 TimerEvent::TimerEvent(unsigned long period, void (*callback) (void*), bool periodic, void* arg)
 {
@@ -29,6 +38,7 @@ TimerEvent::TimerEvent(unsigned long period, void (*callback) (void*), bool peri
 
 TimerOneMulti::TimerOneMulti()
 {
+  quickBeep();
   events = NULL;
   //Timer1.initialize(MAX_PERIOD);         // initialize timer1, and set a 1/2 second period
   Timer1.initialize(500000);
@@ -56,21 +66,21 @@ TimerEvent* TimerOneMulti::addEvent(unsigned long period, void (*callback) (void
     //Add to events
     if ( events ==   NULL)
     {
-      Serial.println("Adding first event");
+      //Serial.println("Adding first event");
       events = event;
       queueWasEmpty = true;
     }
     else
     {
-      Serial.println("Adding non-first event");
+      //Serial.println("Adding non-first event");
       events->delta -= Timer1.read();
       if ( events->delta > period)
       {
         //Insert at the beginning of the list
         events->delta -= period;
-        Serial.println("Adding at beginning of list");
+        /*Serial.println("Adding at beginning of list");
         Serial.print("Delta to next event is ");
-        Serial.println(events->delta, DEC);
+        Serial.println(events->delta, DEC);*/
         event->next = events;
         events  = event;
       }
@@ -78,14 +88,14 @@ TimerEvent* TimerOneMulti::addEvent(unsigned long period, void (*callback) (void
     }
     
   }  
-  Serial.println("Enabling interrupts");
+  //Serial.println("Enabling interrupts");
   interrupts();
-  Serial.println("Interrupts enabled");
+  //Serial.println("Interrupts enabled");
   
   Timer1.setPeriod(events->delta);
   if(queueWasEmpty)
   {
-    Serial.println("Starting timer");
+    //Serial.println("Starting timer");
     Timer1.start();
     Timer1.attachInterrupt(tick);  // attaches callback() as a timer overflow interrupt
   }
@@ -95,10 +105,10 @@ TimerEvent* TimerOneMulti::addEvent(unsigned long period, void (*callback) (void
 
 void TimerOneMulti::advanceTimer()
 {
-  Serial.print("Events = 0x");
+  /*Serial.print("Events = 0x");
   Serial.println((int)events,HEX);
   Serial.print("Time since last timer rollover =");
-  Serial.println(Timer1.read(),DEC);
+  Serial.println(Timer1.read(),DEC);*/
   
   if (events != NULL)
   {
@@ -110,8 +120,8 @@ void TimerOneMulti::advanceTimer()
    }
    else
    {
-     Serial.print("Next event will occur in ");
-     Serial.println(events->delta,DEC);
+     /*Serial.print("Next event will occur in ");
+     Serial.println(events->delta,DEC);*/
      Timer1.setPeriod(events->delta);
      Timer1.start();
      Timer1.attachInterrupt(tick);
@@ -122,7 +132,8 @@ void TimerOneMulti::advanceTimer()
 
 void TimerOneMulti::tick()
 {
-  Serial.println("Tick!");
+  quickBeep();
+  //Serial.println("Tick!");
   
   //Timer should read 0, but for whatever reason when I first start the timer
   //I get an interrupt shortly after. When the proper interrupt occurs, the timer
@@ -130,8 +141,8 @@ void TimerOneMulti::tick()
   //situation in which the time keeps advancing and there's a small delay.
   if(Timer1.read() > 100)
   {
-    Serial.println("Bad tick");
-    Serial.println(Timer1.read(),DEC);
+    //Serial.println("Bad tick");
+    //Serial.println(Timer1.read(),DEC);
     return;
   }
   TimerOneMulti::getTimerController()->advanceTimer();

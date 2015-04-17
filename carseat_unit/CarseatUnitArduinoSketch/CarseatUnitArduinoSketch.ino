@@ -17,6 +17,8 @@ void setLED(void* arg)
 void setup() {
   
   pinMode(13,OUTPUT);
+  pinMode(12, OUTPUT);
+  digitalWrite(12,LOW);
   setLED((void*) 0);
   Serial.begin(9600);
   // put your setup code here, to run once:
@@ -24,10 +26,10 @@ void setup() {
   stateMachine = CarseatUnitStateMachine::getStateMachine();
   
   Serial.println("Adding timer events");
-  timerController->addEvent(9000000,setLED,false, (void*) 0);
-  timerController->addEvent(7000000,setLED,false, (void*) 1);
-  timerController->addEvent(5000000,setLED,false, (void*) 0);
+  timerController->addEvent(7000000,setLED,false, (void*) 0);
   timerController->addEvent(4000000,setLED,false, (void*) 1);
+  timerController->addEvent(3000000,setLED,false, (void*) 0);
+  timerController->addEvent(2000000,setLED,false, (void*) 1);
   
 }
 
