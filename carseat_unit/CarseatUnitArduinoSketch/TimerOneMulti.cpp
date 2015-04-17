@@ -34,6 +34,26 @@ TimerEvent::TimerEvent(unsigned long period, void (*callback) (void*), bool peri
   this->next = NULL;
 }
 
+void TimerEvent::add(TimerEvent* event)
+{
+  if(next == NULL)
+  {
+    next = event;
+  }
+  else if(event->delta < next->delta)
+  {
+    //insert it here (and update previous next's delta)
+    next->delta -= event->delta;
+    event->next = next;
+    next = event;
+  }
+  else
+  {
+    event->delta -= next->delta;
+    next->add(event);
+  }
+}
+
 //TimerOneMulti class methods
 
 TimerOneMulti::TimerOneMulti()
@@ -76,6 +96,11 @@ TimerEvent* TimerOneMulti::addEvent(unsigned long period, void (*callback) (void
         events->delta -= period;
         event->next = events;
         events  = event;
+      }
+      else
+      {
+        event->delta -= events->delta;
+        events->add(event);
       }
       
     }
@@ -126,9 +151,6 @@ void TimerOneMulti::tick()
     timerFirstShot = false;
     return;
   }
-  
-  Timer1.stop();
-  Timer1.detachInterrupt();
     
   TimerOneMulti::getTimerController()->advanceTimer();
 }

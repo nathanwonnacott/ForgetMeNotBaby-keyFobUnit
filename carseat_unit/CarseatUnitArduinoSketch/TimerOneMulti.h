@@ -23,6 +23,8 @@ private:
   void (*callback) (void*);
   void* arg;  
   TimerEvent* next;
+  
+  void add(TimerEvent* event);
 };
 
 class TimerOneMulti
