@@ -24,6 +24,8 @@ void setup() {
   stateMachine = CarseatUnitStateMachine::getStateMachine();
   
   Serial.println("Adding timer events");
+  timerController->addEvent(9000000,setLED,false, (void*) 0);
+  timerController->addEvent(7000000,setLED,false, (void*) 1);
   timerController->addEvent(5000000,setLED,false, (void*) 0);
   timerController->addEvent(4000000,setLED,false, (void*) 1);
   
