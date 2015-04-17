@@ -25,7 +25,7 @@ void setup() {
   timerController = TimerOneMulti::getTimerController();
   stateMachine = CarseatUnitStateMachine::getStateMachine();
   
-  Serial.println("Adding timer events");
+  //Serial.println("Adding timer events");
   timerController->addEvent(7000000,setLED,false, (void*) 0);
   timerController->addEvent(4000000,setLED,false, (void*) 1);
   timerController->addEvent(3000000,setLED,false, (void*) 0);

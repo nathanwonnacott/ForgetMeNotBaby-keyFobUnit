@@ -27,6 +27,8 @@ private:
 
 class TimerOneMulti
 {
+public:
+  volatile static bool timerFirstShot;
 private:
   TimerEvent* events;
   static TimerOneMulti* singleton;

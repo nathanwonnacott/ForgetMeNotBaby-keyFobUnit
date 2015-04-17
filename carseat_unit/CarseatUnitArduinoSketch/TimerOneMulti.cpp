@@ -4,7 +4,7 @@
 //Initialize static variables
 
 TimerOneMulti* TimerOneMulti::singleton = NULL;
-
+volatile bool TimerOneMulti::timerFirstShot = false;
 
 //TODO remove (just useful for debug purposes
 int ledState = LOW;
@@ -16,7 +16,7 @@ void toggleLight()
 
 void quickBeep()
 {
-  for(unsigned long i=0;i<1000;i++)
+  for(unsigned long i=0;i<4000;i++)
   {
     digitalWrite(12,HIGH);
   }
@@ -38,7 +38,6 @@ TimerEvent::TimerEvent(unsigned long period, void (*callback) (void*), bool peri
 
 TimerOneMulti::TimerOneMulti()
 {
-  quickBeep();
   events = NULL;
   //Timer1.initialize(MAX_PERIOD);         // initialize timer1, and set a 1/2 second period
   Timer1.initialize(500000);
@@ -96,6 +95,7 @@ TimerEvent* TimerOneMulti::addEvent(unsigned long period, void (*callback) (void
   if(queueWasEmpty)
   {
     //Serial.println("Starting timer");
+    timerFirstShot = true;
     Timer1.start();
     Timer1.attachInterrupt(tick);  // attaches callback() as a timer overflow interrupt
   }
@@ -122,6 +122,7 @@ void TimerOneMulti::advanceTimer()
    {
      /*Serial.print("Next event will occur in ");
      Serial.println(events->delta,DEC);*/
+     timerFirstShot = true;
      Timer1.setPeriod(events->delta);
      Timer1.start();
      Timer1.attachInterrupt(tick);
@@ -132,19 +133,30 @@ void TimerOneMulti::advanceTimer()
 
 void TimerOneMulti::tick()
 {
-  quickBeep();
   //Serial.println("Tick!");
   
   //Timer should read 0, but for whatever reason when I first start the timer
   //I get an interrupt shortly after. When the proper interrupt occurs, the timer
   //should read 0, (but we check for less than 100 here just in case there's som
   //situation in which the time keeps advancing and there's a small delay.
-  if(Timer1.read() > 100)
+  /*unsigned long timeSinceLastTick = Timer1.read();
+  if(timeSinceLastTick > 100)
   {
     //Serial.println("Bad tick");
-    //Serial.println(Timer1.read(),DEC);
+    //Serial.println(timeSinceLastTick,DEC);
+    return;
+  }*/
+  
+  if ( timerFirstShot)
+  {
+    timerFirstShot = false;
     return;
   }
+  
+  Timer1.stop();
+  Timer1.detachInterrupt();
+  quickBeep();
+    
   TimerOneMulti::getTimerController()->advanceTimer();
 }
 
