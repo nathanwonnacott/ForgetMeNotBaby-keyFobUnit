@@ -35,6 +35,4 @@ void setup() {
 
 void loop() {
 
-  //Serial.print("Timer says ");
-  //Serial.println(Timer1.read(),DEC);
 }

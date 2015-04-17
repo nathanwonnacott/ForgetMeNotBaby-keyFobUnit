@@ -39,8 +39,7 @@ TimerEvent::TimerEvent(unsigned long period, void (*callback) (void*), bool peri
 TimerOneMulti::TimerOneMulti()
 {
   events = NULL;
-  //Timer1.initialize(MAX_PERIOD);         // initialize timer1, and set a 1/2 second period
-  Timer1.initialize(500000);
+  Timer1.initialize(MAX_PERIOD);         // initialize timer1
 
   
 }
@@ -65,36 +64,28 @@ TimerEvent* TimerOneMulti::addEvent(unsigned long period, void (*callback) (void
     //Add to events
     if ( events ==   NULL)
     {
-      //Serial.println("Adding first event");
       events = event;
       queueWasEmpty = true;
     }
     else
     {
-      //Serial.println("Adding non-first event");
       events->delta -= Timer1.read();
       if ( events->delta > period)
       {
         //Insert at the beginning of the list
         events->delta -= period;
-        /*Serial.println("Adding at beginning of list");
-        Serial.print("Delta to next event is ");
-        Serial.println(events->delta, DEC);*/
         event->next = events;
         events  = event;
       }
       
     }
     
-  }  
-  //Serial.println("Enabling interrupts");
+  }
   interrupts();
-  //Serial.println("Interrupts enabled");
   
   Timer1.setPeriod(events->delta);
   if(queueWasEmpty)
   {
-    //Serial.println("Starting timer");
     timerFirstShot = true;
     Timer1.start();
     Timer1.attachInterrupt(tick);  // attaches callback() as a timer overflow interrupt
@@ -105,11 +96,6 @@ TimerEvent* TimerOneMulti::addEvent(unsigned long period, void (*callback) (void
 
 void TimerOneMulti::advanceTimer()
 {
-  /*Serial.print("Events = 0x");
-  Serial.println((int)events,HEX);
-  Serial.print("Time since last timer rollover =");
-  Serial.println(Timer1.read(),DEC);*/
-  
   if (events != NULL)
   {
     events->callback(events->arg);
@@ -120,8 +106,6 @@ void TimerOneMulti::advanceTimer()
    }
    else
    {
-     /*Serial.print("Next event will occur in ");
-     Serial.println(events->delta,DEC);*/
      timerFirstShot = true;
      Timer1.setPeriod(events->delta);
      Timer1.start();
@@ -133,20 +117,10 @@ void TimerOneMulti::advanceTimer()
 
 void TimerOneMulti::tick()
 {
-  //Serial.println("Tick!");
-  
-  //Timer should read 0, but for whatever reason when I first start the timer
-  //I get an interrupt shortly after. When the proper interrupt occurs, the timer
-  //should read 0, (but we check for less than 100 here just in case there's som
-  //situation in which the time keeps advancing and there's a small delay.
-  /*unsigned long timeSinceLastTick = Timer1.read();
-  if(timeSinceLastTick > 100)
-  {
-    //Serial.println("Bad tick");
-    //Serial.println(timeSinceLastTick,DEC);
-    return;
-  }*/
-  
+ 
+ //When you start the timer, it generates an interrupt immediately and then continues
+ //generating interrupts at the interval specified by period. 
+ //But we don't want to do anything on the first shot, just on the second one
   if ( timerFirstShot)
   {
     timerFirstShot = false;
@@ -155,7 +129,6 @@ void TimerOneMulti::tick()
   
   Timer1.stop();
   Timer1.detachInterrupt();
-  quickBeep();
     
   TimerOneMulti::getTimerController()->advanceTimer();
 }
