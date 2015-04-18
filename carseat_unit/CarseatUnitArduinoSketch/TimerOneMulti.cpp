@@ -23,7 +23,10 @@ void quickBeep()
   digitalWrite(12,LOW);
 }
 
-//TimerEvent class methods
+/********************************************
+ *TimerEvent class methods
+ *******************************************/
+ 
 TimerEvent::TimerEvent(unsigned long period, void (*callback) (void*), bool periodic, void* arg)
 {
   this->period = period;
@@ -32,6 +35,7 @@ TimerEvent::TimerEvent(unsigned long period, void (*callback) (void*), bool peri
   this->periodic = periodic;
   this->arg = arg;
   this->next = NULL;
+  this->cancelled = false;
 }
 
 void TimerEvent::add(TimerEvent* event)
@@ -54,8 +58,27 @@ void TimerEvent::add(TimerEvent* event)
   }
 }
 
-//TimerOneMulti class methods
+bool TimerEvent::cancel(TimerEvent* event)
+{
+  if ( event == this)
+  {
+    this->cancelled = true;
+    return true;
+  }
+  else if (this->next != NULL)
+  {
+    return this->next->cancel(event);
+  }
+  else
+  {
+    return false;
+  }
+}
 
+/*********************************************
+ *TimerOneMulti class methods
+ ********************************************/
+ 
 TimerOneMulti::TimerOneMulti()
 {
   events = NULL;
@@ -116,15 +139,41 @@ TimerEvent* TimerOneMulti::addEvent(unsigned long period, void (*callback) (void
     Timer1.attachInterrupt(tick);  // attaches callback() as a timer overflow interrupt
   }
   
+  return event;
+  
   //TODO figure out if any timer interrupts should have occurred while we were in the critical section
 }
+
+bool TimerOneMulti::cancelEvent(TimerEvent* event)
+{
+  bool success = false;
+  //Critical section
+  noInterrupts();
+  {
+    if ( event != NULL && events != NULL )
+    {
+      success = events->cancel(event);
+    }
+  }
+  interrupts();
+  
+  return success;
+}
+
 
 void TimerOneMulti::advanceTimer()
 {
   if (events != NULL)
   {
-    events->callback(events->arg);
+    if ( ! events->cancelled)
+    {
+      events->callback(events->arg);
+    }
+    
+    TimerEvent* eventToDelete = events;
     events = events->next;
+    delete eventToDelete;
+    
    if (events == NULL)
    {
      Timer1.stop();
