@@ -97,44 +97,43 @@ TimerOneMulti* TimerOneMulti::getTimerController()
 
 TimerEvent* TimerOneMulti::addEvent(unsigned long period, void (*callback) (void*), bool periodic /* Default = false */, void* arg /* Default = NULL */)
 {
+  noInterrupts();
   TimerEvent* event = new TimerEvent(period, callback, periodic, arg);
-  return addEvent(event);
+  addEvent(event);
+  interrupts();
+  return event;
 }
 
-TimerEvent* TimerOneMulti::addEvent(TimerEvent* event)
+//This method should only be called with interrupts dissabled
+void TimerOneMulti::addEvent(TimerEvent* event)
 {
   
   bool queueWasEmpty = false;
   
-  //Critical section
-  noInterrupts();
-  {  
-    //Add to events
-    if ( events ==   NULL)
+  //Add to events
+  if ( events ==   NULL)
+  {
+    events = event;
+    queueWasEmpty = true;
+  }
+  else
+  {
+    events->delta -= Timer1.read();
+    if ( events->delta > event->period)
     {
-      events = event;
-      queueWasEmpty = true;
+      //Insert at the beginning of the list
+      events->delta -= event->period;
+      event->next = events;
+      events  = event;
     }
     else
     {
-      events->delta -= Timer1.read();
-      if ( events->delta > event->period)
-      {
-        //Insert at the beginning of the list
-        events->delta -= event->period;
-        event->next = events;
-        events  = event;
-      }
-      else
-      {
-        event->delta -= events->delta;
-        events->add(event);
-      }
-      
+      event->delta -= events->delta;
+      events->add(event);
     }
     
   }
-  interrupts();
+  
   
   Timer1.setPeriod(events->delta);
   if(queueWasEmpty)
@@ -143,8 +142,6 @@ TimerEvent* TimerOneMulti::addEvent(TimerEvent* event)
     Timer1.start();
     Timer1.attachInterrupt(tick);  // attaches callback() as a timer overflow interrupt
   }
-  
-  return event;
   
   //TODO figure out if any timer interrupts should have occurred while we were in the critical section
 }
