@@ -107,7 +107,8 @@ TimerEvent* TimerOneMulti::addEvent(unsigned long period, void (*callback) (void
 //This method should only be called with interrupts dissabled
 void TimerOneMulti::addEvent(TimerEvent* event)
 {
-  
+  //Serial.print("Adding ");
+  //Serial.println((int)event,HEX);
   bool queueWasEmpty = false;
   
   //Add to events
@@ -165,6 +166,8 @@ bool TimerOneMulti::cancelEvent(TimerEvent* event)
 
 void TimerOneMulti::advanceTimer()
 {
+  //Serial.print("Advancing ");
+  //Serial.println((int)events,HEX);
   if (events != NULL)
   {
     if ( ! events->cancelled)
@@ -177,8 +180,9 @@ void TimerOneMulti::advanceTimer()
     
     if (oldEventsHead->periodic && ! oldEventsHead->cancelled)
     {
-      //reset the events delta to be equal to period
+      //reset some thins on the periodic event
       oldEventsHead->delta = oldEventsHead->period;
+      oldEventsHead->next = NULL;
       
       //add it
       addEvent(oldEventsHead);
@@ -203,7 +207,7 @@ void TimerOneMulti::advanceTimer()
 
 void TimerOneMulti::tick()
 {
- 
+ //Serial.println("tick");
  //When you start the timer, it generates an interrupt immediately and then continues
  //generating interrupts at the interval specified by period. 
  //But we don't want to do anything on the first shot, just on the second one

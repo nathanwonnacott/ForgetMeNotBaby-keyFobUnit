@@ -14,11 +14,18 @@ void setLED(void* arg)
   digitalWrite(13,val);
 }
 
-int myLedState = LOW;
+volatile int myLedState = LOW;
 void myToggleLight(void * unused)
 {
   myLedState = ! myLedState;
   digitalWrite(13,myLedState);
+}
+
+volatile bool intFlag = false;
+
+void setIntFlag(void* unused)
+{
+  intFlag = true;
 }
 
 void setup() {
@@ -43,10 +50,16 @@ void setup() {
   timerController->addEvent(8500000,setLED,false, (void*) 0);
   timerController->addEvent(2100000,setLED,false, (void*) 0);
   timerController->addEvent(2200000,setLED,false, (void*) 1);
-  timerController->addEvent(1010000,myToggleLight,true, (void*) 1);
+  timerController->addEvent(131234,myToggleLight,true, (void*) 1);
   
 }
 
 void loop() {
+  
+  if(intFlag)
+  {
+    intFlag = false;
+    Serial.println("interrupt");
+  }
 
 }
