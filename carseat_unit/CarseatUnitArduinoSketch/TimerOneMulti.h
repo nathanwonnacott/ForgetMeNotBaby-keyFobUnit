@@ -55,6 +55,9 @@ public:
 private:
   TimerOneMulti();
   
+  //Note, this one assumes interrupts are already dissabled
+  TimerEvent* addEvent(TimerEvent* event);
+  
   static void tick();
   
 };

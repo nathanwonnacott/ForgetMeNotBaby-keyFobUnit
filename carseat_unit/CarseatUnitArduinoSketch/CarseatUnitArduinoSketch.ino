@@ -14,6 +14,13 @@ void setLED(void* arg)
   digitalWrite(13,val);
 }
 
+int myLedState = LOW;
+void myToggleLight(void * unused)
+{
+  myLedState = ! myLedState;
+  digitalWrite(13,myLedState);
+}
+
 void setup() {
   
   pinMode(13,OUTPUT);
@@ -29,15 +36,14 @@ void setup() {
   timerController->addEvent(7000000,setLED,false, (void*) 0);
   timerController->addEvent(4000000,setLED,false, (void*) 1);
   timerController->addEvent(3000000,setLED,false, (void*) 0);
-  TimerEvent* eventToCancel = timerController->addEvent(2000000,setLED,false, (void*) 1);
+  timerController->addEvent(2000000,setLED,false, (void*) 1);
   timerController->addEvent(5000000,setLED,false, (void*) 0);
   timerController->addEvent(6000000,setLED,false, (void*) 1);
   timerController->addEvent(8000000,setLED,false, (void*) 1);
   timerController->addEvent(8500000,setLED,false, (void*) 0);
   timerController->addEvent(2100000,setLED,false, (void*) 0);
   timerController->addEvent(2200000,setLED,false, (void*) 1);
-  
-  timerController->cancelEvent(eventToCancel);
+  //timerController->addEvent(1000000,myToggleLight,true, (void*) 1);
   
 }
 

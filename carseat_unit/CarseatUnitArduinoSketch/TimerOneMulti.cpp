@@ -97,8 +97,13 @@ TimerOneMulti* TimerOneMulti::getTimerController()
 
 TimerEvent* TimerOneMulti::addEvent(unsigned long period, void (*callback) (void*), bool periodic /* Default = false */, void* arg /* Default = NULL */)
 {
-  
   TimerEvent* event = new TimerEvent(period, callback, periodic, arg);
+  return addEvent(event);
+}
+
+TimerEvent* TimerOneMulti::addEvent(TimerEvent* event)
+{
+  
   bool queueWasEmpty = false;
   
   //Critical section
@@ -113,10 +118,10 @@ TimerEvent* TimerOneMulti::addEvent(unsigned long period, void (*callback) (void
     else
     {
       events->delta -= Timer1.read();
-      if ( events->delta > period)
+      if ( events->delta > event->period)
       {
         //Insert at the beginning of the list
-        events->delta -= period;
+        events->delta -= event->period;
         event->next = events;
         events  = event;
       }
@@ -170,9 +175,15 @@ void TimerOneMulti::advanceTimer()
       events->callback(events->arg);
     }
     
-    TimerEvent* eventToDelete = events;
+    TimerEvent* oldEventsHead = events;
     events = events->next;
-    delete eventToDelete;
+    
+    if (oldEventsHead->periodic && ! oldEventsHead->cancelled)
+    {
+      addEvent(oldEventsHead);
+    }
+    else
+      delete oldEventsHead;
     
    if (events == NULL)
    {
