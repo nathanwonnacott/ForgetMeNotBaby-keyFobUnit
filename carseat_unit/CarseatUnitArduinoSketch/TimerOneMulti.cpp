@@ -177,6 +177,10 @@ void TimerOneMulti::advanceTimer()
     
     if (oldEventsHead->periodic && ! oldEventsHead->cancelled)
     {
+      //reset the events delta to be equal to period
+      oldEventsHead->delta = oldEventsHead->period;
+      
+      //add it
       addEvent(oldEventsHead);
     }
     else
