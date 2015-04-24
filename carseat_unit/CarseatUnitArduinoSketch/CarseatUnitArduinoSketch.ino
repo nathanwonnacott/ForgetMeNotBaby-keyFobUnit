@@ -50,7 +50,8 @@ void setup() {
   timerController->addEvent(8500000,setLED,false, (void*) 0);
   timerController->addEvent(2100000,setLED,false, (void*) 0);
   timerController->addEvent(2200000,setLED,false, (void*) 1);
-  timerController->addEvent(131234,myToggleLight,true, (void*) 1);
+  timerController->addEvent(28500000,setLED,false, (void*) 1);
+  timerController->addEvent(10000000,myToggleLight,true, (void*) 1);
   
 }
 

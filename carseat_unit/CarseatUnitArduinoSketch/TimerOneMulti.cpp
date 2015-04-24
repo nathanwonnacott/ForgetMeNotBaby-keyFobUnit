@@ -36,6 +36,7 @@ TimerEvent::TimerEvent(unsigned long period, void (*callback) (void*), bool peri
   this->arg = arg;
   this->next = NULL;
   this->cancelled = false;
+  this->timeRemainingAfterTick=0;
 }
 
 void TimerEvent::add(TimerEvent* event)
@@ -43,6 +44,11 @@ void TimerEvent::add(TimerEvent* event)
   if(next == NULL)
   {
     next = event;
+    if ( event->delta > MAX_PERIOD )
+    {
+      event->timeRemainingAfterTick = event->delta - MAX_PERIOD;
+      event->delta = MAX_PERIOD;
+    }
   }
   else if(event->delta < next->delta)
   {
@@ -114,6 +120,11 @@ void TimerOneMulti::addEvent(TimerEvent* event)
   //Add to events
   if ( events ==   NULL)
   {
+    if (event->delta > MAX_PERIOD)
+    {
+      event->timeRemainingAfterTick = event->delta - MAX_PERIOD;
+      event->delta = MAX_PERIOD;
+    }
     events = event;
     queueWasEmpty = true;
   }
@@ -170,7 +181,7 @@ void TimerOneMulti::advanceTimer()
   //Serial.println((int)events,HEX);
   if (events != NULL)
   {
-    if ( ! events->cancelled)
+    if ( ! events->cancelled && events->timeRemainingAfterTick == 0)
     {
       events->callback(events->arg);
     }
@@ -178,13 +189,23 @@ void TimerOneMulti::advanceTimer()
     TimerEvent* oldEventsHead = events;
     events = events->next;
     
-    if (oldEventsHead->periodic && ! oldEventsHead->cancelled)
+    //If we need to add the event back into the queue
+    if ( (oldEventsHead->periodic || oldEventsHead->timeRemainingAfterTick > 0 )&& ! oldEventsHead->cancelled)
     {
-      //reset some thins on the periodic event
-      oldEventsHead->delta = oldEventsHead->period;
-      oldEventsHead->next = NULL;
+      //Note that in the case that its periodic and there is timeRemaining after tick, the fact that its periodic doesn't really matter right now
+      if ( oldEventsHead->timeRemainingAfterTick > 0 )
+      {
+        oldEventsHead->delta = oldEventsHead->timeRemainingAfterTick;
+        oldEventsHead->timeRemainingAfterTick = 0; //This will get set to the proper amount when we add it
+      }
+      else //Its periodic and the timer has expired (ie it doesn't have time remaining after tick)
+      {
+        //reset some things on the periodic event
+        oldEventsHead->delta = oldEventsHead->period;
+      }
       
       //add it
+      oldEventsHead->next = NULL;
       addEvent(oldEventsHead);
     }
     else

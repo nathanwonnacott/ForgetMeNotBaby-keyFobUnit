@@ -19,6 +19,7 @@ private:
   TimerEvent(unsigned long period, void (*callback) (void*), bool periodic, void* arg);
   unsigned long delta;
   unsigned long period;
+  unsigned long timeRemainingAfterTick;
   bool periodic;
   bool cancelled;
   void (*callback) (void*);
