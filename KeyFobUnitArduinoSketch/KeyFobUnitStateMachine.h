@@ -6,37 +6,35 @@
  This is the main controller for this program.
 */
 
-#ifndef CARSEAT_UNIT_STATE_MACHINE_H
-  #define CARSEAT_UNIT_STATE_MACHINE_H
+#ifndef KEY_FOB_UNIT_STATE_MACHINE_H
+  #define KEY_FOB_UNIT_STATE_MACHINE_H
  
   
 #define ID 0x1234
 
 //ISR flag values
-#define SEAT_SENSOR_CHANGE_ISR_FLAG  0b10000000
-#define TIMER_FLAG_HEARTBEAT         0b01000000
-#define TIMER_FLAG_SEAT_UP_WAIT      0b00100000
+#define BUZZER_HIGH_START_TIMER  0b10000000
+#define BUZZER_LOW_START_TIMER   0b01000000
+#define BUZZER_STOP_TIMER        0b00100000
+#define BUTTON_PRESS             0b00010000
 
-#define SEAT_SENSOR_IRQ  0  //use 0 for Uno, I believe we need 1 for Nano
+#define BUTTON_IRQ  0  //use 0 for Uno, I believe we need 1 for Nano
 
 //PIN definitions
-#define SEAT_SENSOR  2
 #define LED1         13  //Not sure if we need an LED in production, but it helps for debugging
-#define LED2         12
+#define BUZZER_PIN1  11
+#define BUZZER_PIN2  10
+#define BUTTON       2
 #define TX           1
 #define RX           0
 
 //Timeout values
-#define SEATUP_WAIT_TIMEOUT 1000000
 
-enum CarseatState
+enum KeyFobState
 {
-  INACTIVE,
-  ACTIVE,
-  SEAT_UP_WAIT
 };
 
-class CarseatUnitStateMachine
+class KeyFobUnitStateMachine
 {
 public:
   //Flags indicating which interrupts have occurred. Should not be accessed with interrupts enabled in case later I decide to make it
@@ -45,31 +43,37 @@ public:
   volatile static unsigned char interruptFlags;
   
 private:
-  static CarseatUnitStateMachine* singleton;
+  static KeyFobUnitStateMachine* singleton;
   TimerOneMulti* timerController;
-  
-  void seatDown();
-  void seatUp();
-  CarseatState state;
+
+  KeyFobState state;
   TimerEvent* seatUpWaitTimer;
   
 public:
-  static CarseatUnitStateMachine* getStateMachine();
+  static KeyFobUnitStateMachine* getStateMachine();
   
   void recieveMessage(char* message, int count);
   
   void seatStatusChange(int val);
   
   void seatUpWaitTimerExpired();
+  
+  void connectSound();
+  
+  void disconnectSound();
+  
+  void alarmSound();
+  
+  void buzzerSet(int val, int pitch = LOW);
 
 private:  
-  CarseatUnitStateMachine();
+  KeyFobUnitStateMachine();
   
 };
 
 //ISRs
 void timerISR(void* timerType);  //This is called by TimerOne library, so it can take an argument
-void seatSensorChangeISR();
+void buttonPressISR();
 
 
 #endif
