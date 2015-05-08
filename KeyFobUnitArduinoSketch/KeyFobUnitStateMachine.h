@@ -80,6 +80,7 @@ private:
   KeyFobUnitStateMachine();
   
   void receivedSeatDownMessage();
+  void receivedSeatUpMessage();
   
 };
 

@@ -36,6 +36,10 @@ void KeyFobUnitStateMachine::receiveMessage(char* message, int count)
   {
     receivedSeatDownMessage();
   }
+  else if( count == strlen("FMNB:SeatUp\n") && strncmp(message,"FMNB:SeatUp\n",count) )
+  {
+    receivedSeatUpMessage();
+  }
 }
 
 void KeyFobUnitStateMachine::receivedSeatDownMessage()
@@ -45,6 +49,15 @@ void KeyFobUnitStateMachine::receivedSeatDownMessage()
     connectSound();
   }
   state = CONNECTED;
+}
+
+void KeyFobUnitStateMachine::receivedSeatUpMessage()
+{
+  if ( state != DISCONNECTED)
+  {
+    disconnectSound();
+  }
+  state = DISCONNECTED;
 }
 
 void KeyFobUnitStateMachine::connectSound()
