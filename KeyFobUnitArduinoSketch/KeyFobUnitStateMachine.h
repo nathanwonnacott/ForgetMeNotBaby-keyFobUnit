@@ -1,5 +1,6 @@
 #include "Arduino.h"
 #include "TimerOneMulti.h"
+#include <SoftwareSerial.h>
 
 /*
  This class represents a state machine for the Pressure sensing unit in the carseat.
@@ -27,13 +28,17 @@
 #define BUZZER_PIN1  11
 #define BUZZER_PIN2  10
 #define BUTTON       2
-#define TX           1
-#define RX           0
+#define TX           5
+#define RX           6
 
 //Timeout values
 
 enum KeyFobState
 {
+  CONNECTED,
+  CONNECTION_RETRY,
+  ALARMING,
+  DISCONNECTED
 };
 
 class KeyFobUnitStateMachine
@@ -50,9 +55,12 @@ private:
 
   KeyFobState state;
   TimerEvent* seatUpWaitTimer;
+  SoftwareSerial* serialPort;
   
 public:
   static KeyFobUnitStateMachine* getStateMachine();
+  
+  SoftwareSerial* getSerialPort();
   
   void receiveMessage(char* message, int count);
   
@@ -70,6 +78,8 @@ public:
 
 private:  
   KeyFobUnitStateMachine();
+  
+  void receivedSeatDownMessage();
   
 };
 

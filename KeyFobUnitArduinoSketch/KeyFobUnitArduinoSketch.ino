@@ -1,4 +1,5 @@
 #include <TimerOne.h>
+#include <SoftwareSerial.h>
 #include "TimerOneMulti.h"
 #include <avr/sleep.h>
 #include <avr/power.h>
@@ -6,8 +7,10 @@
 
 #include "KeyFobUnitStateMachine.h"
 
+//Declare global variables
 KeyFobUnitStateMachine* stateMachine;
 TimerOneMulti* timerController;
+
 char serialReceiveBuffer[MESSAGE_BUFFER_SIZE];
 
 void sleep()
@@ -36,11 +39,13 @@ void setup() {
 
   //Set up pins
   pinMode(LED1, OUTPUT);
+  pinMode(LED2, OUTPUT);
   pinMode(BUZZER_PIN1, OUTPUT);
   pinMode(BUZZER_PIN2, OUTPUT);
   pinMode(BUTTON, INPUT);
   
   digitalWrite(LED1, LOW);
+  digitalWrite(LED2, LOW);
   digitalWrite(BUZZER_PIN1, LOW);
   digitalWrite(BUZZER_PIN2, LOW);
   
@@ -95,13 +100,13 @@ void loop()
     odd = !odd;
   }
   
-  while(Serial.available())
+  while(stateMachine->getSerialPort()->available())
   {
-    byte bytesRead = Serial.readBytesUntil('\n',serialReceiveBuffer,MESSAGE_BUFFER_SIZE);
+    byte bytesRead = stateMachine->getSerialPort()->readBytesUntil('\n',serialReceiveBuffer,MESSAGE_BUFFER_SIZE);
     stateMachine->receiveMessage(serialReceiveBuffer,bytesRead);
   }
   
-  digitalWrite(LED1,! digitalRead(LED1));
+  digitalWrite(LED2,! digitalRead(LED2));
 
 }
 

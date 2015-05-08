@@ -11,6 +11,14 @@ volatile unsigned char KeyFobUnitStateMachine::interruptFlags = 0;
 KeyFobUnitStateMachine::KeyFobUnitStateMachine()
 {
   timerController = TimerOneMulti::getTimerController();
+  serialPort = new SoftwareSerial(RX, TX);
+  serialPort->begin(9600);
+  state = DISCONNECTED;
+}
+
+SoftwareSerial* KeyFobUnitStateMachine::getSerialPort()
+{
+  return serialPort;
 }
 
 KeyFobUnitStateMachine* KeyFobUnitStateMachine::getStateMachine()
@@ -23,17 +31,29 @@ KeyFobUnitStateMachine* KeyFobUnitStateMachine::getStateMachine()
 
 void KeyFobUnitStateMachine::receiveMessage(char* message, int count)
 {
-  buzzerSet(HIGH,HIGH);
-  delay(10);
-  buzzerSet(LOW);
+  
+  if ( count == strlen("FMNB:SeatDown\n") && strncmp(message,"FMNB:SeatDown\n",count) )
+  {
+    receivedSeatDownMessage();
+  }
+}
+
+void KeyFobUnitStateMachine::receivedSeatDownMessage()
+{
+  if ( state != CONNECTED)
+  {
+    connectSound();
+  }
+  state = CONNECTED;
 }
 
 void KeyFobUnitStateMachine::connectSound()
 {
   buzzerSet(HIGH, LOW);
-  timerController->addEvent(100000, timerISR, false, (void*) BUZZER_STOP_TIMER);
-  timerController->addEvent(140000, timerISR, false, (void*) BUZZER_HIGH_START_TIMER);
-  timerController->addEvent(200000, timerISR, false, (void*) BUZZER_STOP_TIMER);
+  delay(100);
+  buzzerSet(HIGH, HIGH);
+  delay(100);
+  buzzerSet(LOW);
 }
   
 void KeyFobUnitStateMachine::disconnectSound()
@@ -56,6 +76,8 @@ void KeyFobUnitStateMachine::buzzerSet(int val, int pitch)
     digitalWrite(BUZZER_PIN2, val);
   }
 }
+
+
 
 //ISRs
 void timerISR(void* timerType)
