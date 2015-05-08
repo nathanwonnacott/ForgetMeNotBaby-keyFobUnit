@@ -19,6 +19,8 @@
 #define BUZZER_LOW_START_TIMER   0b01000000
 #define BUZZER_STOP_TIMER        0b00100000
 #define BUTTON_PRESS             0b00010000
+#define HEART_BEAT_WAIT_TIMER    0b00001000
+#define CONNECTION_RETRY_TIMER   0b00000100
 
 #define BUTTON_IRQ  0  //use 0 for Uno, I believe we need 1 for Nano
 
@@ -32,6 +34,9 @@
 #define RX           6
 
 //Timeout values
+#define HEART_BEAT_WAIT_TIMEOUT    1500000
+#define CONNECTION_RETRY_TIMEOUT   1000000
+#define MAX_NUM_CONNECTION_RETRIES 3
 
 enum KeyFobState
 {
@@ -54,8 +59,11 @@ private:
   TimerOneMulti* timerController;
 
   KeyFobState state;
-  TimerEvent* seatUpWaitTimer;
+  TimerEvent* heartBeatWaitTimer;
+  TimerEvent* connectionRetryTimer;
   SoftwareSerial* serialPort;
+  
+  int connectionRetryCount;
   
 public:
   static KeyFobUnitStateMachine* getStateMachine();
@@ -66,7 +74,9 @@ public:
   
   void seatStatusChange(int val);
   
-  void seatUpWaitTimerExpired();
+  void heartBeatWaitTimerExpired();
+  
+  void connectionRetryTimeout();
   
   void connectSound();
   
@@ -81,6 +91,7 @@ private:
   
   void receivedSeatDownMessage();
   void receivedSeatUpMessage();
+  void cancelReconnectTimer();
   
 };
 

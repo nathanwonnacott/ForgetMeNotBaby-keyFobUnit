@@ -14,6 +14,9 @@ KeyFobUnitStateMachine::KeyFobUnitStateMachine()
   serialPort = new SoftwareSerial(RX, TX);
   serialPort->begin(9600);
   state = DISCONNECTED;
+  heartBeatWaitTimer = NULL;
+  connectionRetryTimer = NULL;
+  connectionRetryCount = 0;
 }
 
 SoftwareSerial* KeyFobUnitStateMachine::getSerialPort()
@@ -48,7 +51,20 @@ void KeyFobUnitStateMachine::receivedSeatDownMessage()
   {
     connectSound();
   }
+  
+  if ( state == CONNECTION_RETRY)
+  {
+    cancelReconnectTimer();
+  }
+  
+  if ( heartBeatWaitTimer != NULL)
+  {
+    timerController->cancelEvent(heartBeatWaitTimer);
+    heartBeatWaitTimer = NULL;
+  }
+  heartBeatWaitTimer = timerController->addEvent(HEART_BEAT_WAIT_TIMEOUT,timerISR, false, (void*) HEART_BEAT_WAIT_TIMER);
   state = CONNECTED;
+  digitalWrite(LED1,HIGH);
 }
 
 void KeyFobUnitStateMachine::receivedSeatUpMessage()
@@ -57,7 +73,47 @@ void KeyFobUnitStateMachine::receivedSeatUpMessage()
   {
     disconnectSound();
   }
+  if ( state == CONNECTION_RETRY)
+  {
+    cancelReconnectTimer();
+  }
+  if ( heartBeatWaitTimer != NULL)
+  {
+    timerController->cancelEvent(heartBeatWaitTimer);
+    heartBeatWaitTimer = NULL;
+  }
   state = DISCONNECTED;
+  digitalWrite(LED1,LOW);
+}
+
+
+void KeyFobUnitStateMachine::heartBeatWaitTimerExpired()
+{
+  state = CONNECTION_RETRY;
+  digitalWrite(LED1,LOW);
+  
+  connectionRetryTimer = timerController->addEvent(CONNECTION_RETRY_TIMEOUT, timerISR, true, (void*) CONNECTION_RETRY_TIMER);
+  serialPort->println("FMNB:Reconnect");
+  
+}
+
+void KeyFobUnitStateMachine::connectionRetryTimeout()
+{
+  if( ++connectionRetryCount > MAX_NUM_CONNECTION_RETRIES)
+  {
+    alarmSound();
+  }
+  serialPort->println("FMNB:Reconnect");
+}
+
+void KeyFobUnitStateMachine::cancelReconnectTimer()
+{
+  if (connectionRetryTimer != NULL)
+  {
+    timerController->cancelEvent(connectionRetryTimer);
+    connectionRetryTimer = NULL;
+    connectionRetryCount = 0;
+  }
 }
 
 void KeyFobUnitStateMachine::connectSound()
@@ -72,13 +128,19 @@ void KeyFobUnitStateMachine::connectSound()
 void KeyFobUnitStateMachine::disconnectSound()
 {
   buzzerSet(HIGH, HIGH);
-  timerController->addEvent(100000, timerISR, false, (void*) BUZZER_STOP_TIMER);
-  timerController->addEvent(140000, timerISR, false, (void*) BUZZER_LOW_START_TIMER);
-  timerController->addEvent(200000, timerISR, false, (void*) BUZZER_STOP_TIMER);
+  delay(100);
+  buzzerSet(HIGH, LOW);
+  delay(100);
+  buzzerSet(LOW);
 }
   
 void KeyFobUnitStateMachine::alarmSound()
 {
+  cancelReconnectTimer();
+  state = ALARMING;
+  buzzerSet(HIGH,HIGH);
+  delay(1000);
+  buzzerSet(LOW);
 }
 
 void KeyFobUnitStateMachine::buzzerSet(int val, int pitch)
@@ -87,6 +149,10 @@ void KeyFobUnitStateMachine::buzzerSet(int val, int pitch)
   if(val == LOW || pitch == HIGH)
   {
     digitalWrite(BUZZER_PIN2, val);
+  }
+  if(val == HIGH && pitch == LOW)
+  {
+    digitalWrite(BUZZER_PIN2, LOW);
   }
 }
 

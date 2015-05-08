@@ -90,6 +90,14 @@ void loop()
   {
     stateMachine->buzzerSet(LOW);
   }
+  if ( interruptFlagsCopy & HEART_BEAT_WAIT_TIMER)
+  {
+    stateMachine->heartBeatWaitTimerExpired();
+  }
+  if ( interruptFlagsCopy & CONNECTION_RETRY_TIMER)
+  {
+    stateMachine->connectionRetryTimeout();
+  }
   if (interruptFlagsCopy & BUTTON_PRESS && (digitalRead(BUTTON) == HIGH))
   {
     if (odd)
