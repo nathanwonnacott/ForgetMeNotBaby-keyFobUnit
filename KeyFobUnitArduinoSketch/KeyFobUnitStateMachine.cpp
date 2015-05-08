@@ -47,7 +47,7 @@ void KeyFobUnitStateMachine::receiveMessage(char* message, int count)
 
 void KeyFobUnitStateMachine::receivedSeatDownMessage()
 {
-  if ( state != CONNECTED)
+  if ( state != CONNECTED && state != CONNECTION_RETRY )
   {
     connectSound();
   }
