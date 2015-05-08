@@ -8,7 +8,7 @@
 
 KeyFobUnitStateMachine* stateMachine;
 TimerOneMulti* timerController;
-
+char serialReceiveBuffer[MESSAGE_BUFFER_SIZE];
 
 void sleep()
 {
@@ -94,6 +94,14 @@ void loop()
     
     odd = !odd;
   }
+  
+  while(Serial.available())
+  {
+    byte bytesRead = Serial.readBytesUntil('\n',serialReceiveBuffer,MESSAGE_BUFFER_SIZE);
+    stateMachine->receiveMessage(serialReceiveBuffer,bytesRead);
+  }
+  
+  digitalWrite(LED1,! digitalRead(LED1));
 
 }
 

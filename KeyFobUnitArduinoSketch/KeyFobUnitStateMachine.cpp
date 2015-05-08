@@ -21,9 +21,11 @@ KeyFobUnitStateMachine* KeyFobUnitStateMachine::getStateMachine()
   return singleton;
 }
 
-void KeyFobUnitStateMachine::recieveMessage(char* message, int count)
+void KeyFobUnitStateMachine::receiveMessage(char* message, int count)
 {
-  
+  buzzerSet(HIGH,HIGH);
+  delay(10);
+  buzzerSet(LOW);
 }
 
 void KeyFobUnitStateMachine::connectSound()

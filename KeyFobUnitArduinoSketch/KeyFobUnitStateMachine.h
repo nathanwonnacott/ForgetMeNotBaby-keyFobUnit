@@ -11,6 +11,7 @@
  
   
 #define ID 0x1234
+#define MESSAGE_BUFFER_SIZE 100
 
 //ISR flag values
 #define BUZZER_HIGH_START_TIMER  0b10000000
@@ -22,6 +23,7 @@
 
 //PIN definitions
 #define LED1         13  //Not sure if we need an LED in production, but it helps for debugging
+#define LED2         12  //Not needed in production, but usefull for debugging
 #define BUZZER_PIN1  11
 #define BUZZER_PIN2  10
 #define BUTTON       2
@@ -52,7 +54,7 @@ private:
 public:
   static KeyFobUnitStateMachine* getStateMachine();
   
-  void recieveMessage(char* message, int count);
+  void receiveMessage(char* message, int count);
   
   void seatStatusChange(int val);
   
