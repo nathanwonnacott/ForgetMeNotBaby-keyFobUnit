@@ -78,6 +78,25 @@ void loop()
   KeyFobUnitStateMachine::interruptFlags = 0;
   interrupts();
   
+  /*if ( interruptFlagsCopy != 0)
+  {
+    char buff[13];
+    buff[0] = 'F';
+    buff[1] = ':';
+    buff[2] = '0';
+    buff[3] = 'x';
+    buff[4] = (interruptFlagsCopy & 0b10000000)? '1':'0';
+    buff[5] = (interruptFlagsCopy & 0b01000000)? '1':'0';
+    buff[6] = (interruptFlagsCopy & 0b00100000)? '1':'0';
+    buff[7] = (interruptFlagsCopy & 0b00010000)? '1':'0';
+    buff[8] = (interruptFlagsCopy & 0b00001000)? '1':'0';
+    buff[9] = (interruptFlagsCopy & 0b00000100)? '1':'0';
+    buff[10] = (interruptFlagsCopy & 0b00000010)? '1':'0';
+    buff[11] = (interruptFlagsCopy & 0b00000001)? '1':'0';
+    buff[12] = '\0';
+    Serial.println(buff);
+  }*/
+  
   if ( interruptFlagsCopy & BUZZER_HIGH_START_TIMER)
   {
     stateMachine->buzzerSet(HIGH, HIGH);
@@ -98,19 +117,21 @@ void loop()
   {
     stateMachine->connectionRetryTimeout();
   }
-  if (interruptFlagsCopy & BUTTON_PRESS && (digitalRead(BUTTON) == HIGH))
+  if (interruptFlagsCopy & ALARM_PHASE_TIMER)
   {
-    if (odd)
-      stateMachine->connectSound();
-    else
-      stateMachine->disconnectSound();
-    
-    odd = !odd;
+    stateMachine->alarmSound();
+  }
+  if (interruptFlagsCopy & BUTTON_PRESS)
+  {
+    stateMachine->cancelReconnectTimer();
+    stateMachine->cancelAlarm();
   }
   
   while(stateMachine->getSerialPort()->available())
   {
     byte bytesRead = stateMachine->getSerialPort()->readBytesUntil('\n',serialReceiveBuffer,MESSAGE_BUFFER_SIZE);
+    /*serialReceiveBuffer[bytesRead] = '\0';
+    Serial.println(serialReceiveBuffer);*/
     stateMachine->receiveMessage(serialReceiveBuffer,bytesRead);
   }
   

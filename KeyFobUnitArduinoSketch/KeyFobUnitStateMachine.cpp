@@ -16,7 +16,10 @@ KeyFobUnitStateMachine::KeyFobUnitStateMachine()
   state = DISCONNECTED;
   heartBeatWaitTimer = NULL;
   connectionRetryTimer = NULL;
+  alarmPhaseTimer = NULL;
   connectionRetryCount = 0;
+  alarmPhase = 0;
+  
 }
 
 SoftwareSerial* KeyFobUnitStateMachine::getSerialPort()
@@ -52,9 +55,10 @@ void KeyFobUnitStateMachine::receivedSeatDownMessage()
     connectSound();
   }
   
-  if ( state == CONNECTION_RETRY)
+  if ( state == CONNECTION_RETRY || state == ALARMING)
   {
     cancelReconnectTimer();
+    cancelAlarm();
   }
   
   if ( heartBeatWaitTimer != NULL)
@@ -73,9 +77,10 @@ void KeyFobUnitStateMachine::receivedSeatUpMessage()
   {
     disconnectSound();
   }
-  if ( state == CONNECTION_RETRY)
+  if ( state == CONNECTION_RETRY || state == ALARMING)
   {
     cancelReconnectTimer();
+    cancelAlarm();
   }
   if ( heartBeatWaitTimer != NULL)
   {
@@ -99,11 +104,25 @@ void KeyFobUnitStateMachine::heartBeatWaitTimerExpired()
 
 void KeyFobUnitStateMachine::connectionRetryTimeout()
 {
-  if( ++connectionRetryCount > MAX_NUM_CONNECTION_RETRIES)
+  //Serial.println("reconnect");
+  if( ++connectionRetryCount > MAX_NUM_CONNECTION_RETRIES && state != ALARMING)
   {
+    state = ALARMING;
     alarmSound();
   }
   serialPort->println("FMNB:Reconnect");
+}
+
+void KeyFobUnitStateMachine::cancelAlarm()
+{
+  state = DISCONNECTED;
+  if ( alarmPhaseTimer != NULL)
+  {
+    timerController->cancelEvent(alarmPhaseTimer);
+    alarmPhaseTimer = NULL;
+    alarmPhase = 0;
+  }
+  buzzerSet(LOW);
 }
 
 void KeyFobUnitStateMachine::cancelReconnectTimer()
@@ -136,21 +155,68 @@ void KeyFobUnitStateMachine::disconnectSound()
   
 void KeyFobUnitStateMachine::alarmSound()
 {
-  cancelReconnectTimer();
-  state = ALARMING;
-  buzzerSet(HIGH,HIGH);
-  delay(1000);
-  buzzerSet(LOW);
+  /*char buff[9];
+  buff[0] = 'A';
+  buff[1] = 'l';
+  buff[2] = 'a';
+  buff[3] = 'r';
+  buff[4] = 'm';
+  buff[5] = ':';
+  buff[6] = '0' + alarmPhase/10;
+  buff[7] = '0' + alarmPhase%10;
+  buff[8] = '\0';
+  Serial.println(buff);*/
+  
+  
+  if ( state != ALARMING)
+  {
+    return;
+  }
+  
+  switch(alarmPhase)
+  {
+    case 0:
+      if ( alarmPhaseTimer == NULL)
+        alarmPhaseTimer = timerController->addEvent(ALARM_PHASE_TIMER_INTERVAL, timerISR, true, (void*) ALARM_PHASE_TIMER);
+      
+      /*for(int i=0;i<2;i++)
+      {
+      
+        buzzerSet(HIGH,LOW);
+        delay(40);
+        buzzerSet(LOW);
+        if ( i < 4) //Cut off the last delay so that we get back to the loop before the next tick
+          delay(10);
+      }*/
+      buzzerSet(HIGH,LOW);
+      break;
+    case 1:
+    case 3:
+    case 5:
+      buzzerSet(HIGH,HIGH);
+      break;
+    case 2:
+    case 4:
+    case 6:
+     buzzerSet(HIGH,LOW);
+     break;
+    default:
+      buzzerSet(LOW);
+      alarmPhase = -1;
+     
+  }
+  
+  alarmPhase++;
 }
 
 void KeyFobUnitStateMachine::buzzerSet(int val, int pitch)
 {
   digitalWrite(BUZZER_PIN1, val);
-  if(val == LOW || pitch == HIGH)
+  if(val == HIGH && pitch == HIGH)
   {
-    digitalWrite(BUZZER_PIN2, val);
+    digitalWrite(BUZZER_PIN2, HIGH);
   }
-  if(val == HIGH && pitch == LOW)
+  else
   {
     digitalWrite(BUZZER_PIN2, LOW);
   }

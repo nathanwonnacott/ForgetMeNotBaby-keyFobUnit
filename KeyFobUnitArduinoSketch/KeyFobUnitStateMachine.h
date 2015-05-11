@@ -21,6 +21,7 @@
 #define BUTTON_PRESS             0b00010000
 #define HEART_BEAT_WAIT_TIMER    0b00001000
 #define CONNECTION_RETRY_TIMER   0b00000100
+#define ALARM_PHASE_TIMER        0b00000010
 
 #define BUTTON_IRQ  0  //use 0 for Uno, I believe we need 1 for Nano
 
@@ -35,8 +36,9 @@
 
 //Timeout values
 #define HEART_BEAT_WAIT_TIMEOUT    1500000
-#define CONNECTION_RETRY_TIMEOUT   1000000
+#define CONNECTION_RETRY_TIMEOUT   250000
 #define MAX_NUM_CONNECTION_RETRIES 3
+#define ALARM_PHASE_TIMER_INTERVAL 250000
 
 enum KeyFobState
 {
@@ -61,7 +63,9 @@ private:
   KeyFobState state;
   TimerEvent* heartBeatWaitTimer;
   TimerEvent* connectionRetryTimer;
+  TimerEvent* alarmPhaseTimer;
   SoftwareSerial* serialPort;
+  int alarmPhase;
   
   int connectionRetryCount;
   
@@ -85,13 +89,17 @@ public:
   void alarmSound();
   
   void buzzerSet(int val, int pitch = LOW);
+  
+  void cancelAlarm();
+  
+  void cancelReconnectTimer();
 
 private:  
   KeyFobUnitStateMachine();
   
   void receivedSeatDownMessage();
   void receivedSeatUpMessage();
-  void cancelReconnectTimer();
+  
   
 };
 
